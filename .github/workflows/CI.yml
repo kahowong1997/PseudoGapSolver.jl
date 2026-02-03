@@ -18,12 +18,13 @@ jobs:
           version: '1.12'
       - uses: julia-actions/cache@v2
       
-      - name: Force Install Test and Run
+      - name: Install and Run Tests
         shell: julia --color=yes {0}
         run: |
           using Pkg
           Pkg.activate(".")
-          # This forces the environment to realize Test is an extra dependency
-          Pkg.develop(PackageSpec(path=pwd())) 
           Pkg.instantiate()
-          Pkg.test()
+          # Explicitly add Test to the temporary CI environment only
+          Pkg.add("Test") 
+          # Run the test script directly
+          include("test/runtests.jl")

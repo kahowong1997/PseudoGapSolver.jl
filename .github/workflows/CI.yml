@@ -4,18 +4,25 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      JULIA_NUM_THREADS: 1  # Explicitly force single-threading
     steps:
       - uses: actions/checkout@v4
+      
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.12'
-      - shell: julia --color=yes {0}
-        run: |
-          using Pkg
-          Pkg.activate(".")
-          Pkg.instantiate()
-          Pkg.test()
+          
+      - uses: julia-actions/cache@v2 # Caches SparseIR/FFTW to save minutes per run
+      
+      - uses: julia-actions/julia-buildpkg@v1
+      
+      - name: Run Tests
+        uses: julia-actions/julia-runtest@v1
+        with:
+          annotate: true

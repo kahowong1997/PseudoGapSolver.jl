@@ -1,0 +1,10 @@
+name = "PseudoGapSolver"
+uuid = "7c2a416a-6052-4416-8c70-692550186591"
+authors = ["Ka Ho Wong"]
+version = "0.1.0"
+
+[deps]
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+LinearAlgebra = "37e2e131-0c33-5c22-8392-744040955b55"
+SparseIR = "4fe2279e-80f0-4adb-8463-ee114ff56b7d"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad40a3b0"

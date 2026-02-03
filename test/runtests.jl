@@ -196,7 +196,7 @@ function run_sigma_direct_sum_test()
     @testset "Validation of Sigma via Direct Summation" begin
         Nk, beta, a, b, wmax, Delta = 8, 0.232, 3.82, π/3.82, 5000.0, 100.0
         k_grid = collect(range(0, 2b, length=Nk+1)[1:Nk])
-        Ek_grid = [-200.0 * (cos(kx*a) + cos(ky*a)) - (-50.0) for kx in k_grid, iy in 1:Nk] # Restored logic
+        Ek_grid = [-200.0 * (cos(kx*a) + cos(ky*a)) - (-50.0) for kx in k_grid, ky in 1:Nk] # Restored logic
 
         smpl_wn_f = MatsubaraSampling(FiniteTempBasis(Fermionic(), beta, wmax, 1e-15))
         smpl_wn_b = MatsubaraSampling(FiniteTempBasis(Bosonic(), beta, wmax, 1e-15))

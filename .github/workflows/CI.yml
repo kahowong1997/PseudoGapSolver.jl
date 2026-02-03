@@ -22,9 +22,10 @@ jobs:
         shell: julia --color=yes {0}
         run: |
           using Pkg
-          Pkg.activate(".")
+          # Explicitly activate the cloned repository directory
+          Pkg.activate(joinpath(ENV["GITHUB_WORKSPACE"]))
           Pkg.instantiate()
-          # Explicitly add Test to the temporary CI environment only
           Pkg.add("Test") 
-          # Run the test script directly
-          include("test/runtests.jl")
+          
+          # Use an absolute path to find the test file
+          include(joinpath(ENV["GITHUB_WORKSPACE"], "test", "runtests.jl"))

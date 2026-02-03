@@ -1,8 +1,5 @@
 # Fast frequency-space convolution routines for pseudogap solver using SparseIR sampling
 
-using SparseIR, FFTW, LinearAlgebra, Statistics
-FFTW.set_num_threads(1)
-
 # ======================================================================================
 # 1. Precomputation and Data Structures
 # ======================================================================================

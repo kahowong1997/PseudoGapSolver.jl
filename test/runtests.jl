@@ -2,9 +2,6 @@ using Test
 using PseudoGapSolver
 using SparseIR, LinearAlgebra, Statistics
 
-# Ensure we include the solver from the correct relative path for CI
-include(joinpath(@__DIR__, "../src/FFT_solver.jl"))
-
 # ======================================================================================
 # 1. Helper Functions (Analytic Reference)
 # ======================================================================================

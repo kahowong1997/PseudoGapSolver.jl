@@ -1,36 +1,21 @@
 name: CI
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - '1.12'
-        os:
-          - ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
-      - uses: julia-actions/cache@v2
-      
-      # This step ensures the environment is ready
+          version: '1.12'
       - shell: julia --color=yes {0}
         run: |
           using Pkg
           Pkg.activate(".")
           Pkg.instantiate()
-          Pkg.precompile()
-          
-      # This runs your test/runtests.jl
-      - uses: julia-actions/julia-runtest@v1
+          Pkg.test()

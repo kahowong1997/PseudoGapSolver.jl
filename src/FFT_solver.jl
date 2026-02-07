@@ -344,7 +344,6 @@ function solve_chemical_potential(Sigma_iwn, Ek, smpl_wn_f, Nk, beta, n_target;
         end
         
         # 1. Calculate Local Derivative (Finite Difference)
-        # This fixes the "drift" by getting the TRUE slope right here, right now.
         delta = 1e-3
         n_probe, _ = compute_density(mu_shift_1 + delta)
         deriv = (n_probe - n_1) / delta

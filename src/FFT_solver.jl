@@ -296,7 +296,7 @@ Iteratively adjusts the chemical potential μ to match the target particle densi
 Optimized to reuse the `G_temp` buffer and minimize allocations.
 """
 function solve_chemical_potential(Sigma_iwn, Ek, smpl_wn_f, Nk, beta, n_target;
-                                  max_iter=20, 
+                                  max_iter=30, 
                                   tol=1e-5)
     
     # Pre-calculate frequency points from sampling
@@ -331,55 +331,37 @@ function solve_chemical_potential(Sigma_iwn, Ek, smpl_wn_f, Nk, beta, n_target;
         return n_calc, G_l
     end
 
-    # --- Secant Method Initialization ---
-    mu_shift_0 = 0.0
-    n_0, G_l_0 = compute_density(mu_shift_0)
-    G_l_final = G_l_0
+    # --- INITIALIZATION ---
+    mu_shift_1 = 0.0 
+    n_1, G_l_final = compute_density(mu_shift_1)
     
-    if abs(n_0 - n_target) < tol
-        return G_l_final, mu_shift_0, n_0
-    end
-
-    # Heuristic guess for second point:
-    diff_0 = n_0 - n_target
-    mu_shift_1 = mu_shift_0 - sign(diff_0) * 0.5 
-    
-    n_1 = 0.0
-    
-    # --- Secant Loop ---
+    # --- NEWTON LOOP ---
     for iter in 1:max_iter
-        n_1, G_l_1 = compute_density(mu_shift_1)
-        G_l_final = G_l_1
+        diff = n_1 - n_target
         
-        diff_1 = n_1 - n_target
-        
-        # Check convergence
-        if abs(diff_1) < tol
+        if abs(diff) < tol
             return G_l_final, mu_shift_1, n_1
         end
         
-        denom = n_1 - n_0
+        # 1. Calculate Local Derivative (Finite Difference)
+        # This fixes the "drift" by getting the TRUE slope right here, right now.
+        delta = 1e-3
+        n_probe, _ = compute_density(mu_shift_1 + delta)
+        deriv = (n_probe - n_1) / delta
         
-        # Guard against division by zero (if function is flat)
-        if abs(denom) < 1e-12
-            # Fallback to a small push if stuck
-            mu_new = mu_shift_1 - sign(diff_1) * 0.1
+        # 2. Determine Step
+        # Gap Protection: If derivative is vanishingly small, creep linearly.
+        if abs(deriv) < 1e-7
+            step = -sign(diff) * 1.0
         else
-            mu_new = mu_shift_1 - diff_1 * (mu_shift_1 - mu_shift_0) / denom
+            step = -diff / deriv
         end
         
-        # Safety clamp to prevent exploding steps in early iterations
-        # (Optional, but good for stability)
-        max_step = 50.0 # Allow large steps for t=100 case
-        step = mu_new - mu_shift_1
-        mu_new = mu_shift_1 + clamp(step, -max_step, max_step)
-        
-        # Update history
-        mu_shift_0, n_0 = mu_shift_1, n_1
-        mu_shift_1 = mu_new
+        # 3. Update
+        mu_shift_1 += step
+        n_1, G_l_final = compute_density(mu_shift_1)
     end
-    
-    # If we exit loop, return best effort
+
     println("Warning: Chemical potential solver did not fully converge. Final error: $(n_1 - n_target)")
     return G_l_final, mu_shift_1, n_1
 

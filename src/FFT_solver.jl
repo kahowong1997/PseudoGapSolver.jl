@@ -335,7 +335,11 @@ function solve_chemical_potential(Sigma_iwn, Ek, smpl_wn_f, Nk, beta, n_target;
     mu_shift_1 = 0.0 
     n_1, G_l_final = compute_density(mu_shift_1)
     
-    # --- NEWTON LOOP ---
+    # Initialize Safe Brackets (Large enough for 2000K jumps, but finite)
+    mu_min = -5000.0
+    mu_max = 5000.0
+
+    # --- NEWTON LOOP WITH BISECTION GUARD ---
     for iter in 1:max_iter
         diff = n_1 - n_target
         
@@ -343,21 +347,41 @@ function solve_chemical_potential(Sigma_iwn, Ek, smpl_wn_f, Nk, beta, n_target;
             return G_l_final, mu_shift_1, n_1
         end
         
-        # 1. Calculate Local Derivative (Finite Difference)
+        # 1. Update Brackets based on current density
+        # If n_1 > n_target, we have too many electrons -> mu must be LOWER. 
+        # So the current mu is a new upper bound (mu_max).
+        if diff > 0
+            mu_max = min(mu_max, mu_shift_1)
+        else
+            mu_min = max(mu_min, mu_shift_1)
+        end
+
+        # 2. Calculate Local Derivative (Finite Difference)
         delta = 1e-3
         n_probe, _ = compute_density(mu_shift_1 + delta)
         deriv = (n_probe - n_1) / delta
         
-        # 2. Determine Step
-        # Gap Protection: If derivative is vanishingly small, creep linearly.
-        if abs(deriv) < 1e-7
-            step = -sign(diff) * 1.0
+        # 3. Determine Step (Newton)
+        if abs(deriv) < 1e-9
+            # Derivative vanished (incompressible gap) -> Force infinite step to trigger guard
+            step = 1e6 * sign(diff) 
         else
             step = -diff / deriv
         end
         
-        # 3. Update
-        mu_shift_1 += step
+        # 4. The Guard: Check if Newton shoots out of bounds
+        mu_proposed = mu_shift_1 + step
+        
+        if (mu_proposed <= mu_min) || (mu_proposed >= mu_max)
+            # Newton failed (infinite wind-up or overshoot). 
+            # Fallback: Bisect the safe bracket.
+            mu_shift_1 = (mu_min + mu_max) / 2.0
+        else
+            # Newton is safe. Accept the step.
+            mu_shift_1 = mu_proposed
+        end
+        
+        # 5. Update
         n_1, G_l_final = compute_density(mu_shift_1)
     end
 
